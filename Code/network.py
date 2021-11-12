@@ -1,8 +1,13 @@
 import socket
 import threading
 
+#server related variables
 host="http://ludicroustech.ca"
 port=420
+
+#state related variables, these describe what the drone should be doing 
+#state variables are updated by network.py when process() is called and 
+#main.py will query these regularly to orient the drone
 
 def process(data):
     return data #fix
