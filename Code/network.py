@@ -1,8 +1,10 @@
 import socket
 import threading
+import time
 
 #server related variables
-host="http://ludicroustech.ca"
+server="http://ludicroustech.ca"
+peer_client = None
 port=420
 
 #state related variables, these describe what the drone should be doing 
@@ -24,13 +26,24 @@ class Server(threading.Thread):
             process(master.recv(4096))
 
 class Client(threading.Thread):
-    def connect(self,host,port):
-        self.sock.connect((host,port))
     def send(self,msg): #as bytes string
         self.sock.send(msg)
     def run(self):
+        global server
+        global peer_client
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.connect(host,port)
+        self.sock.connect((server,port))
+        self.sock.send(b"REQPEER")
+        self.sock.listen(1)
+        (msg,peer) = self.sock.accept()
+        while 1:
+            if (msg[0] == b'A'):
+                server = msg[2:]
+                peer_client=Client()
+                peer_client.start()
+                break
+            else:
+                time.sleep(1)
 
 srv=Server()
 srv.daemon=True
