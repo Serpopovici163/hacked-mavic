@@ -1,39 +1,66 @@
-#used to test random code
-from math import *
-from haversine import *
+import socket
+import sys
+import time
+import threading
+import select
+import traceback
 
-lat1 = 40.76
-lon1 = -73.984
-lat2 = 38.89
-lon2 = -77.032
+class Server(threading.Thread):
+    def initialise(self,receive):
+        self.receive=receive
+    def run(self):
+        lis=[]
+        lis.append(self.receive)
+        while 1:
+            read,write,err=select.select(lis,[],[])
+            for item in read:
+                try:
+                    s=item.recv(1024)
+                    if s!='':
+                        chunk=s                
+                        print(str('')+':'+chunk)
+                except:
+                    traceback.print_exc(file=sys.stdout)
+                    break
 
-bearing = atan2(sin(lon2-lon1)*cos(lat2), cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1))
-bearing = degrees(bearing)
-bearing = (bearing + 360) % 360
-
-def initial_bearing(pointA, pointB):
-
-    if (type(pointA) != tuple) or (type(pointB) != tuple):
-        raise TypeError("Only tuples are supported as arguments")
-
-    lat1 = radians(pointA[0])
-    lat2 = radians(pointB[0])
-
-    diffLong = radians(pointB[1] - pointA[1])
-
-    x = sin(diffLong) * cos(lat2)
-    y = cos(lat1) * sin(lat2) - (sin(lat1)
-            * cos(lat2) * cos(diffLong))
-
-    initial_bearing = atan2(x, y)
-
-    # Now we have the initial bearing but math.atan2 return values
-    # from -180° to + 180° which is not what we want for a compass bearing
-    # The solution is to normalize the initial bearing as shown below
-    initial_bearing = degrees(initial_bearing)
-    compass_bearing = (initial_bearing + 360) % 360
-
-    return compass_bearing
-
-print(haversine((lat1,lon1),(lat2,lon2)))
-print(initial_bearing((lat1,lon1),(lat2,lon2)))
+class Client(threading.Thread):    
+    def connect(self,host,port):
+        self.sock.connect((host,port))
+    def client(self,host,port,msg):               
+        sent=self.sock.send(msg)           
+        #print "Sent\n"
+    def run(self):
+        self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        try:
+            host=input("Enter the hostname\n>>")            
+            port=int(input("Enter the port\n>>"))
+        except EOFError:
+            print("Error")
+            return 1
+        
+        print("Connecting\n")
+        s=''
+        self.connect(host,port)
+        print("Connected\n")
+        receive=self.sock
+        time.sleep(1)
+        srv=Server()
+        srv.initialise(receive)
+        srv.daemon=True
+        print("Starting service")
+        srv.start()
+        while 1:            
+            #print "Waiting for message\n"
+            msg=input('>>')
+            if msg=='exit':
+                break
+            if msg=='':
+                continue
+            #print "Sending\n"
+            self.client(host,port,msg)
+        return(1)
+if __name__=='__main__':
+    print("Starting client")
+    cli=Client()    
+    cli.start()

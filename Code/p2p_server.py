@@ -1,8 +1,5 @@
 import socket
 import threading
-#debug
-import time
-import os
 
 host = ''
 port = 420
@@ -11,15 +8,18 @@ peer2 = None
 
 class Server(threading.Thread):
     def run(self):
-        global peer1
-        global peer2
-        self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("run")
+        self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        print("run")
         self.sock.bind((host,port))
-        self.sock.listen(1)
+        print("run")
+        self.sock.listen(2)
+        print("run")
         (master,address)=self.sock.accept()
+        print("at loop")
         while 1:
             #debug
-            os.system("cls")
+            print("in loop")
             if (peer1 != None):
                 print("Peer1 > " + str(peer1))
             else:
