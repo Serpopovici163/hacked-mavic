@@ -1,66 +1,30 @@
-import socket
-import sys
-import time
-import threading
-import select
-import traceback
+dataString = "2040" 
 
-class Server(threading.Thread):
-    def initialise(self,receive):
-        self.receive=receive
-    def run(self):
-        lis=[]
-        lis.append(self.receive)
-        while 1:
-            read,write,err=select.select(lis,[],[])
-            for item in read:
-                try:
-                    s=item.recv(1024)
-                    if s!='':
-                        chunk=s                
-                        print(str('')+':'+chunk)
-                except:
-                    traceback.print_exc(file=sys.stdout)
-                    break
+buffer = hex(1500).replace("x","")
+dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
+buffer = hex(1499).replace("x","")
+dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
+buffer = hex(1007).replace("x","")
+dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
+buffer = hex(1501).replace("x","")
+dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
+dataString = dataString + "D007"
+dataString = dataString + "D007"
 
-class Client(threading.Thread):    
-    def connect(self,host,port):
-        self.sock.connect((host,port))
-    def client(self,host,port,msg):               
-        sent=self.sock.send(msg)           
-        #print "Sent\n"
-    def run(self):
-        self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        try:
-            host=input("Enter the hostname\n>>")            
-            port=int(input("Enter the port\n>>"))
-        except EOFError:
-            print("Error")
-            return 1
-        
-        print("Connecting\n")
-        s=''
-        self.connect(host,port)
-        print("Connected\n")
-        receive=self.sock
-        time.sleep(1)
-        srv=Server()
-        srv.initialise(receive)
-        srv.daemon=True
-        print("Starting service")
-        srv.start()
-        while 1:            
-            #print "Waiting for message\n"
-            msg=input('>>')
-            if msg=='exit':
-                break
-            if msg=='':
-                continue
-            #print "Sending\n"
-            self.client(host,port,msg)
-        return(1)
-if __name__=='__main__':
-    print("Starting client")
-    cli=Client()    
-    cli.start()
+for i in range(8):
+    dataString = dataString + "DC05"
+
+byteArray = []
+for i in range(0, len(dataString), 2):
+    byteArray.append(dataString[i:i+2])
+
+checksum = 0xffff
+for byte in byteArray:
+    checksum = checksum - int("0x" + byte, 16)
+
+buffer = hex(checksum).replace("0x", "")
+dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
+
+print(str(dataString))
+print(str(checksum))
+print(0xF354)
