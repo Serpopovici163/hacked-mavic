@@ -1,7 +1,6 @@
 import socket
-import sys
+import os
 import threading
-import time
 from typing import runtime_checkable
 import misc
 
@@ -29,35 +28,6 @@ def updateLocal(msg):
     alt = int(data[2])
     goal = int(data[3])
 
-misc.log(misc.info, 'Connecting to P2P Server')
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('0.0.0.0', 50001))
-sock.sendto(b'0', server)
-
-while True:
-    data = sock.recv(1024).decode()
-
-    if data.strip() == 'ready':
-        misc.log(misc.info, 'Response OK, waiting for peer')
-        break
-
-data = sock.recv(1024).decode()
-ip, sport, dport = data.split(' ')
-sport = int(sport)
-dport = int(dport)
-
-misc.log(misc.info, '\nGot peer')
-misc.log(misc.info, '  IP:          {}'.format(ip))
-misc.log(misc.info, '  Source port: {}'.format(sport))
-misc.log(misc.info, '  Dest port:   {}\n'.format(dport))
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('0.0.0.0', sport))
-sock.sendto(b'0', (ip, dport))
-
-misc.log(misc.info, "Connection OK")
-
 def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', sport))
@@ -67,8 +37,51 @@ def listen():
         misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
         updateLocal(data.decode())
 
-listener = threading.Thread(target=listen, daemon=True);
-listener.start()
+def connect():
+    misc.log(misc.info, 'Connecting to P2P Server')
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('0.0.0.0', dport))
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', 50001))
+    sock.sendto(b'0', server)
+
+    while True:
+        data = sock.recv(1024).decode()
+
+        if data.strip() == 'ready':
+            misc.log(misc.info, 'Response OK, waiting for peer')
+            break
+
+    data = sock.recv(1024).decode()
+    ip, sport, dport = data.split(' ')
+    sport = int(sport)
+    dport = int(dport)
+
+    misc.log(misc.info, '\nGot peer')
+    misc.log(misc.info, '  IP:          {}'.format(ip))
+    misc.log(misc.info, '  Source port: {}'.format(sport))
+    misc.log(misc.info, '  Dest port:   {}\n'.format(dport))
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', sport))
+    sock.sendto(b'0', (ip, dport))
+
+    misc.log(misc.info, "Connection OK")
+
+    listener = threading.Thread(target=listen, daemon=True);
+    listener.start()
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', dport))
+
+def ping():
+    url,port=server
+    if (os.system("ping -c 1" + url) == 0):
+        return True
+    else:
+        return False
+
+def init():
+    if (ping()):
+        connect()
+        return True
+    return False

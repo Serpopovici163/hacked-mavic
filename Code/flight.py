@@ -6,8 +6,7 @@ from gps import *
 from haversine import *
 from math import *
 
-gps = serial.Serial(port = '/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
-ibus = serial.Serial(port = '/dev/ttyS1', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+serial = serial.Serial(port = '/dev/ttyS0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
 gpsd = None
 
 #flight status variables
@@ -22,7 +21,7 @@ class GpsPoller(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
     global gpsd #bring it in scope
-    gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
+    gpsd = serial(mode=WATCH_ENABLE) #starting the stream of info
     self.current_value = None
     self.running = True #setting the thread running to true
 
@@ -79,7 +78,7 @@ def iBusOut(throttle, roll, pitch, yaw, arm):
     buffer = hex(checksum).replace("0x", "")
     dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
 
-    ibus.write(dataString)
+    serial.write(dataString)
 
 def speed(delta):
     #here delta is distance to target in m so the drone will know to speed up if it is far and slow down when close
@@ -125,3 +124,8 @@ def updateFlight(target_lat, target_lon, target_alt):
     speed(delta)
     target_bearing = get_bearing((lat, lon), (target_lat, target_lon))
     #manage that and also manage throttle
+
+def checkFix():
+    if (gpsd.satellites > 7):
+        return True
+    return False
