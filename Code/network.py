@@ -5,7 +5,7 @@ from typing import runtime_checkable
 import misc
 
 #server related variables
-server=("http://ludicroustech.ca", 55555)
+server=(socket.gethostbyname("ludicroustech.ca"), 55555)
 
 #state related variables, these describe what the drone should be doing 
 #state variables are updated by network.py when process() is called and 
@@ -27,15 +27,6 @@ def updateLocal(msg):
     target = (data[0],data[1])
     alt = int(data[2])
     goal = int(data[3])
-
-def listen():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('0.0.0.0', sport))
-
-    while True:
-        data = sock.recv(1024)
-        misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
-        updateLocal(data.decode())
 
 def connect():
     misc.log(misc.info, 'Connecting to P2P Server')
@@ -73,9 +64,14 @@ def connect():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', dport))
 
+    while True:
+        data = sock.recv(1024)
+        misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
+        updateLocal(data.decode())
+
 def ping():
     url,port=server
-    if (os.system("ping -c 1" + url) == 0):
+    if (os.system("ping -c 1 " + url.replace("http://","")) == 0):
         return True
     else:
         return False
