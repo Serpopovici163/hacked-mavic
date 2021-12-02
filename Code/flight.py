@@ -6,7 +6,7 @@ from gps import *
 from haversine import *
 from math import *
 
-serial = serial.Serial(port = '/dev/ttyS0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+#serial = serial.Serial(port = '/dev/ttyS0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1) #iBus not used rn
 gpsd = None
 
 #flight status variables
@@ -15,6 +15,9 @@ alt = 0 #m
 lat = 0 #gotten from gpsd
 lon = 0
 bearing = 0 #gotten from I2C compass
+targetLat = 0
+targetLon = 0
+targetAlt = 0
 
 #initialize GPS
 class GpsPoller(threading.Thread):
@@ -78,7 +81,7 @@ def iBusOut(throttle, roll, pitch, yaw, arm):
     buffer = hex(checksum).replace("0x", "")
     dataString = dataString + buffer[2] + buffer[3] + buffer[0] + buffer[1]
 
-    serial.write(dataString)
+    #serial.write(dataString)
 
 def speed(delta):
     #here delta is distance to target in m so the drone will know to speed up if it is far and slow down when close

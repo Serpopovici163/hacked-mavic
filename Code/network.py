@@ -14,20 +14,18 @@ server=("ludicroustech.ca", 55555)
 dport = 0
 target = ('','') #lat and long coord set
 alt = 50
-goal = 0 #values for goal will be defined below
 STAY = 0
 TRAVEL = 1
 RTH = 2
 LAND = 3
 
 def updateLocal(msg):
+    print("got msg") #debug
     global target
-    global goal
     global alt
     data = msg.split("/")
     target = (data[0],data[1])
     alt = int(data[2])
-    goal = int(data[3])
 
 def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -44,16 +42,27 @@ def connect():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', 50001))
+    sock.settimeout(5)
     
-    while True:
-        sock.sendto(b'0', server)
-        data = sock.recv(1024).decode()
+    running = True
+    while running:
+        try:
+            sock.sendto(b'0', server)
+            data = sock.recv(1024).decode()
+            if data.strip() == 'ready':
+                misc.log(misc.info, 'Response OK, waiting for peer')
+                running = False
+        except:     
+            running = True   
 
-        if data.strip() == 'ready':
-            misc.log(misc.info, 'Response OK, waiting for peer')
-            break
+    running = True
+    while running:
+        try:
+            data = sock.recv(1024).decode()
+            running = False
+        except:
+            running = True
 
-    data = sock.recv(1024).decode()
     ip, sport, dport = data.split(' ')
     sport = int(sport)
     dport = int(dport)

@@ -28,3 +28,11 @@ time.sleep(3)
 
 #advance system state
 GPIO.output(19, 1)
+
+try:
+    while True:
+        flight.targetLat, flight.targetLon = network.target
+        flight.targetAlt = network.alt
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("Ctrl-C exception")
