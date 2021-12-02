@@ -44,9 +44,9 @@ def connect():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', 50001))
-    sock.sendto(b'0', server)
-
+    
     while True:
+        sock.sendto(b'0', server)
         data = sock.recv(1024).decode()
 
         if data.strip() == 'ready':
