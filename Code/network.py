@@ -5,12 +5,13 @@ from typing import runtime_checkable
 import misc
 
 #server related variables
-server=(socket.gethostbyname("ludicroustech.ca"), 55555)
+server=("ludicroustech.ca", 55555)
 
 #state related variables, these describe what the drone should be doing 
 #state variables are updated by network.py when process() is called and 
 #main.py will query these regularly to orient the drone
 
+dport = 0
 target = ('','') #lat and long coord set
 alt = 50
 goal = 0 #values for goal will be defined below
@@ -28,7 +29,17 @@ def updateLocal(msg):
     alt = int(data[2])
     goal = int(data[3])
 
+def listen():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', dport))
+
+    while True:
+        data = sock.recv(1024)
+        misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
+        updateLocal(data.decode())
+
 def connect():
+    global dport
     misc.log(misc.info, 'Connecting to P2P Server')
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -47,10 +58,10 @@ def connect():
     sport = int(sport)
     dport = int(dport)
 
-    misc.log(misc.info, '\nGot peer')
+    misc.log(misc.info, 'Got peer')
     misc.log(misc.info, '  IP:          {}'.format(ip))
     misc.log(misc.info, '  Source port: {}'.format(sport))
-    misc.log(misc.info, '  Dest port:   {}\n'.format(dport))
+    misc.log(misc.info, '  Dest port:   {}'.format(dport))
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', sport))
@@ -58,16 +69,8 @@ def connect():
 
     misc.log(misc.info, "Connection OK")
 
-    listener = threading.Thread(target=listen, daemon=True);
+    listener = threading.Thread(target=listen, daemon=True)
     listener.start()
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('0.0.0.0', dport))
-
-    while True:
-        data = sock.recv(1024)
-        misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
-        updateLocal(data.decode())
 
 def ping():
     url,port=server
