@@ -304,7 +304,7 @@ void loop() {
   digitalWrite(RIGHT_LED, LOW);
   for (int i = 0; i < 6; i++)
     lights.setPixelColor(i, 0, 0, 0);
-  
+  /*
   //check IBus related functions
   if (LEDState())
     policeLightCycle();
@@ -353,6 +353,19 @@ void loop() {
     digitalWrite(LEFT_LED, LOW);
     digitalWrite(RIGHT_LED, LOW);
     userControl();
+  }*/
+  if (IBus.readChannel(6) > 1500) {
+    if (IBus.readChannel(7) > 1500) {
+      cancer();
+    } else {
+      hazardLightCycle();
+    }
+  } else {
+    if (IBus.readChannel(7) > 1500) {
+      policeLightCycle();
+    } else {
+      userControl();
+    }
   }
     
   lights.show();

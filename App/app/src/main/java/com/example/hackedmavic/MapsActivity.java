@@ -35,7 +35,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     int altitude = 50; //standard alt of 50m
     LatLng user;
     LatLng drone = null;
-    NetworkIO networkIO = new NetworkIO();
+    NetworkIO networkIO = new NetworkIO(MapsActivity.this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +62,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         toast("Duplicate request, not sent");
                     else if (returnVal == NetworkIO.PEER_OFFLINE)
                         toast("UAV offline");
+                    else
+                        toast("Instructions sent");
                 }
             }
         });

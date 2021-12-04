@@ -16,20 +16,25 @@ public class NetworkIO {
 
     static int DUPLICATE_REQUEST = 99;
     static int PEER_OFFLINE = 98;
-
     private String server="http://ludicroustech.ca";
     private int port = 55555;
     String peerIP = "";
-    int peerSrcPort = 55555;
-    int peerDstPort = 55556;
+    int peerSrcPort = 0;
+    int peerDstPort = 0;
     LatLng prevDrone = null;
+
+    Context mCont;
+
+    public NetworkIO(Context context) {
+        mCont = context;
+    }
 
     void connectP2P() {
         new Thread() {
             @Override
             public void run() {
                 try {
-                    DatagramSocket ds = new DatagramSocket(port);
+                    DatagramSocket ds = new DatagramSocket(50001);
                     byte[] buf = "0".getBytes();
                     DatagramPacket dp = new DatagramPacket(buf, buf.length, InetAddress.getByName(new URL(server).getHost()), port);
                     ds.send(dp);
@@ -37,9 +42,9 @@ public class NetworkIO {
                     DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
                     ds.receive(recvPacket);
                     String recvStr = new String(recvPacket.getData(), 0, recvPacket.getLength());
+                    Log.e("P2P", recvStr); //DEBUG
                     if (Objects.equals(recvStr, "ready")) {
-                        MapsActivity mapsActivity = new MapsActivity();
-                        mapsActivity.toast("Waiting on drone");
+                        //Toast.makeText(mCont, "Waiting on drone", Toast.LENGTH_LONG).show();
                         //now wait for peer info
                         ds.receive(recvPacket);
                         recvStr = new String(recvPacket.getData(), 0, recvPacket.getLength());
@@ -48,7 +53,9 @@ public class NetworkIO {
                         peerIP = data[0];
                         peerSrcPort = Integer.parseInt(data[1]);
                         peerDstPort = Integer.parseInt(data[2]);
-
+                        Log.e("P2P", "IP: " + peerIP);
+                        Log.e("P2P", "SPORT: " + String.valueOf(peerSrcPort));
+                        Log.e("P2P", "DPORT: " + String.valueOf(peerDstPort));
                     }
                     ds.close();
                 } catch (Exception e) {
@@ -73,24 +80,28 @@ public class NetworkIO {
             @Override
             public void run() {
                 try {
-                    DatagramSocket ds = new DatagramSocket(port);
+                    DatagramSocket ds = new DatagramSocket(peerDstPort);
                     byte[] buf = request.getBytes();
-                    DatagramPacket dp = new DatagramPacket(buf, buf.length, InetAddress.getByName(peerIP), peerDstPort);
+                    DatagramPacket dp = new DatagramPacket(buf, buf.length, InetAddress.getByName(peerIP), peerSrcPort);
+                    Log.e("SEND", "presend");
                     ds.send(dp);
-                    byte[] recvBuf = new byte[1024];
+/*                    byte[] recvBuf = new byte[1024];
                     DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
                     ds.receive(recvPacket);
                     String recvStr = new String(recvPacket.getData(), 0, recvPacket.getLength());
                     if (Objects.equals(recvStr, "ok")) {
                         MapsActivity mapsActivity = new MapsActivity();
                         mapsActivity.toast("Response OK");
-                    }
+                    }*/
                     ds.close();
+                    Log.e("SEND", "done");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }.start();
+
+        prevDrone = drone;
 
         return 0;
     }

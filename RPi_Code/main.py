@@ -20,19 +20,27 @@ while (not network.init()):
 GPIO.output(20, 1)
 GPIO.output(19, 0)
 
-#next wait for GPS fix
-#while (not flight.checkFix()):
-#    time.sleep(1)
 
-time.sleep(3)
+while (not flight.checkFix()):
+    time.sleep(1)
 
 #advance system state
 GPIO.output(19, 1)
 
 try:
     while True:
-        flight.targetLat, flight.targetLon = network.target
+        targetLatBuf, targetLonBuf = network.target
+
+        #check for change to flash LEDs
+        if (targetLatBuf != flight.targetLat or targetLonBuf != flight.targetLon or network.alt != flight.targetAlt):
+            GPIO.output(21, 1)
+            time.sleep(0.25)
+            GPIO.output(21, 0)
+
+        flight.targetLat = targetLatBuf
+        flight.targetLon = targetLonBuf
         flight.targetAlt = network.alt
-        time.sleep(1)
+        flight.updateFlight()
+        time.sleep(0.01)
 except KeyboardInterrupt:
     print("Ctrl-C exception")

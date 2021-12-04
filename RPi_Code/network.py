@@ -4,6 +4,9 @@ import threading
 from typing import runtime_checkable
 import misc
 
+#debug
+import time
+
 #server related variables
 server=("ludicroustech.ca", 55555)
 
@@ -11,16 +14,14 @@ server=("ludicroustech.ca", 55555)
 #state variables are updated by network.py when process() is called and 
 #main.py will query these regularly to orient the drone
 
+sock = None
+ip = ""
+sport = 0
 dport = 0
 target = ('','') #lat and long coord set
 alt = 50
-STAY = 0
-TRAVEL = 1
-RTH = 2
-LAND = 3
 
 def updateLocal(msg):
-    print("got msg") #debug
     global target
     global alt
     data = msg.split("/")
@@ -28,13 +29,14 @@ def updateLocal(msg):
     alt = int(data[2])
 
 def listen():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('0.0.0.0', dport))
-
+    global sock
     while True:
-        data = sock.recv(1024)
-        misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
-        updateLocal(data.decode())
+        try:
+            data = sock.recv(1024)
+            misc.log(misc.info, '\rpeer: {}\n> '.format(data.decode()), end='')
+            updateLocal(data.decode())
+        except:
+            pass #bad thing ik but it's fine since I'm expecting Timeout errors here
 
 def connect():
     global dport
@@ -63,9 +65,9 @@ def connect():
         except:
             running = True
 
-    ip, sport, dport = data.split(' ')
-    sport = int(sport)
-    dport = int(dport)
+    ip, sport_str, dport_str = data.split(' ')
+    sport = int(sport_str)
+    dport = int(dport_str)
 
     misc.log(misc.info, 'Got peer')
     misc.log(misc.info, '  IP:          {}'.format(ip))
@@ -83,7 +85,7 @@ def connect():
 
 def ping():
     url,port=server
-    if (os.system("ping -c 1 " + url.replace("http://","")) == 0):
+    if (os.system("ping -c 1 " + url) == 0):
         return True
     else:
         return False
@@ -93,3 +95,12 @@ def init():
         connect()
         return True
     return False
+
+#debug
+connect()
+try:
+    while True:
+        listen()
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("ctrl-c")
